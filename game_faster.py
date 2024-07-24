@@ -672,5 +672,5 @@ class Quoridor:
 if __name__ == '__main__':
     quoridor = Quoridor(
         lambda id, pos, goal: create_alpha_beta_player(id, pos, goal, depth=1),
-        lambda id, pos, goal: create_alpha_beta_player(id, pos, goal, depth=1))
+        lambda id, pos, goal: create_alpha_beta_player(id, pos, goal, depth=2))
     quoridor.play_game()
