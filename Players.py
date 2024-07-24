@@ -1,5 +1,5 @@
 from dataclasses import field, dataclass
-from random import random
+import random
 from typing import List
 
 import numpy as np
@@ -57,7 +57,7 @@ class AlphaBetaPlayer(Player):
 
     def __recursive_minimax(self, game_state, depth, is_max, best_other):
         if depth == 0 or len(game_state.get_legal_moves()) == 0:
-            return self.evaluation_function(game_state), ""
+            return evaluation_function(game_state), ""
         if game_state.status == GameStatus.COMPLETED:
             return (np.inf, "") if game_state.winner == self.id else (-np.inf, "")
         value = -np.inf if is_max else np.inf
@@ -100,9 +100,12 @@ class AlphaBetaPlayer(Player):
                         filtered_moves.append(move)
         return filtered_moves
 
-    def evaluation_function(self, game_state):
-        return -abs(int(game_state.current_player.pos[-1]) - int(game_state.current_player.goal)) + 2 * abs(int(game_state.waiting_player.pos[-1]) - int(game_state.waiting_player.goal))
+def evaluation_function(game_state):
+    return - get_player_dist_from_goal(game_state.current_player) + 2 * get_player_dist_from_goal(game_state.waiting_player)
 
+
+def get_player_dist_from_goal(player):
+    return abs(int(player.pos[-1]) - int(player.goal))
 
 def create_player(id, pos, goal):
     return Player(id=id, pos=pos, goal=goal)

@@ -561,7 +561,7 @@ class Quoridor:
         """
         if node not in visited:
             visited.add(node)
-            for neighbour in graph[node]:
+            for neighbour in sorted(graph[node], key=lambda x:-abs(int(x[1]) - int(goal))):
                 if neighbour[1] == goal:
                     return True
                 if self._dfs(visited, graph, neighbour, goal):
