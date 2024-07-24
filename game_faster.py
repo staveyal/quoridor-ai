@@ -216,7 +216,6 @@ class Quoridor:
         if len(move) == 2:
             self._make_pawn_move(move)
             if self.current_player.pos[1] == self.current_player.goal:
-                self.is_terminated = True
                 self.status = GameStatus.COMPLETED
                 return
         else:
@@ -306,13 +305,15 @@ class Quoridor:
             * loser: The player who lost the game.
             * pgn: The Portable Game Notation representation of the game's moves.
         """
-        while not self.is_terminated:
+        while not self.status == GameStatus.COMPLETED:
             print(f"current player: {self.current_player}")
             print(f"waiting player: {self.waiting_player}")
-            print(f"legal_moves {self.get_legal_moves()}")
+            #print(f"legal_moves {self.get_legal_moves()}")
             # print()
             # print_quoridor_board(self.current_player, self.waiting_player, self.get_legal_moves())
             command = self.current_player.get_action(self)
+            print(f"{self.current_player.id}: {self.current_player.pos}->{command}")
+            print("-------------------------------------------------------------------------------")
             if command == "q":
                 self.status = GameStatus.CANCELLED
                 return GameResult(

@@ -62,7 +62,9 @@ class AlphaBetaPlayer(Player):
             return (np.inf, "") if game_state.winner == self.id else (-np.inf, "")
         value = -np.inf if is_max else np.inf
         action = ""
-        for next_action in game_state.get_legal_moves():
+        filterd = self.filter_moves(game_state.get_legal_moves(), game_state)
+        #print(filterd)
+        for next_action in filterd:
             game_state.make_move(next_action)
             next_value, _ = self.__recursive_minimax(game_state, depth - 1 if not is_max else depth, not is_max, value)
             game_state.undo_move()
@@ -80,8 +82,26 @@ class AlphaBetaPlayer(Player):
                     break
         return value, action
 
+    def dist_from_cell(self, move, pos):
+        return max(abs(ord(move[0]) - ord(pos[0])), abs(ord(move[1]) - ord(pos[1])))
+
+    def filter_moves(self, legal_moves, game_state):
+        filtered_moves = []
+        for move in legal_moves:
+            if len(move) == 2:
+                filtered_moves.append(move)
+            elif self.dist_from_cell(move, game_state.current_player.pos) <= 1:
+                filtered_moves.append(move)
+            elif self.dist_from_cell(move, game_state.waiting_player.pos) <= 1:
+                filtered_moves.append(move)
+            else:
+                for wall in game_state.placed_walls:
+                    if self.dist_from_cell(move, wall[:2]) <= 1:
+                        filtered_moves.append(move)
+        return filtered_moves
+
     def evaluation_function(self, game_state):
-        return -abs(int(game_state.current_player.pos[-1]) - int(game_state.current_player.goal))
+        return -abs(int(game_state.current_player.pos[-1]) - int(game_state.current_player.goal)) + 2 * abs(int(game_state.waiting_player.pos[-1]) - int(game_state.waiting_player.goal))
 
 
 def create_player(id, pos, goal):
