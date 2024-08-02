@@ -673,6 +673,6 @@ class Quoridor:
 
 if __name__ == '__main__':
     quoridor = Quoridor(
-        lambda id, pos, goal: create_heuristic_player(id, pos, goal),
+        lambda id, pos, goal: MonteCarloPlayer(id, pos, goal, simulations=100),
         lambda id, pos, goal: create_alpha_beta_player(id, pos, goal, depth=1))
     quoridor.play_game()

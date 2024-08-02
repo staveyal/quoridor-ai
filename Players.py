@@ -90,13 +90,13 @@ class AlphaBetaPlayer(Player):
                 if smaller_or_equals_with_chance(value, next_value):
                     value = next_value
                     action = next_action
-                if best_other <= value:
+                if best_other < value:
                     break
             else:
                 if not smaller_or_equals_with_chance(value, next_value):
                     value = next_value
                     action = next_action
-                if best_other >= value:
+                if best_other > value:
                     break
         return value, action
 
@@ -161,3 +161,32 @@ def create_ramdom_player(id, pos, goal):
 
 def create_alpha_beta_player(id, pos, goal, depth):
     return AlphaBetaPlayer(id=id, pos=pos, goal=goal, depth=depth)
+
+
+class MonteCarloPlayer(Player):
+    def __init__(self, id, pos, goal, walls=START_WALLS, position_history=None, placed_walls=None, simulations=100):
+        super().__init__(id, pos, goal, walls, position_history, placed_walls)
+        self.simulations = simulations
+
+    def get_action(self, game_state):
+        legal_moves = game_state.get_legal_moves()
+        move_scores = {move: 0 for move in legal_moves}
+
+        for move in legal_moves:
+            for _ in range(self.simulations):
+                simulation_game = Quoridor.init_from_pgn(game_state.get_pgn())
+                simulation_game.make_move(move)
+                result = self.simulate_random_game(simulation_game)
+                if result == self.id:
+                    move_scores[move] += 1
+
+        best_move = max(move_scores, key=move_scores.get)
+        return best_move
+
+    def simulate_random_game(self, game_state):
+        while game_state.status == GameStatus.ONGOING:
+            legal_moves = game_state.get_legal_moves()
+            move = random.choice(legal_moves)
+            game_state.make_move(move)
+
+        return game_state.current_player.id if game_state.status == GameStatus.COMPLETED else -1
