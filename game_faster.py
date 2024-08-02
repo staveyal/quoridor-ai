@@ -1,10 +1,13 @@
+import random
 import string
 import pickle
 from dataclasses import dataclass
 from typing import Optional, Dict, List, Set
 
-from Constants import START_POS_P1, GOAL_P1, GOAL_P2, START_POS_P2, GameStatus, ALL_QUORIDOR_MOVES_REGEX, POSSIBLE_WALLS
-from Players import Player, create_player, create_alpha_beta_player, create_heuristic_player
+from Constants import START_POS_P1, GOAL_P1, GOAL_P2, START_POS_P2, GameStatus, ALL_QUORIDOR_MOVES_REGEX, \
+    POSSIBLE_WALLS, START_WALLS
+from Heuristics import both_goals_evaluation_function, self_dist_from_goal_evaluation_function
+from Players import Player, AlphaBetaPlayer, HeuristicPlayer
 from exceptions import (
     InvalidMoveError,
     IllegalPawnMoveError,
@@ -13,6 +16,7 @@ from exceptions import (
     GameCompletedError,
     NothingToUndoError,
 )
+from mcts import MCTSNode
 
 
 @dataclass
@@ -72,14 +76,10 @@ class Quoridor:
         Whether or not the game is terminated.
     """
 
-    def __init__(self,player1_factory=create_player, player2_factory=create_player) -> None:
+    def __init__(self,player1, player2) -> None:
         self.board: Dict[str, List[str]] = self._create_board()
-        self.player1 = player1_factory(
-            id=1, pos=START_POS_P1, goal=GOAL_P1
-        )
-        self.player2 = player2_factory(
-            id=2, pos=START_POS_P2, goal=GOAL_P2
-        )
+        self.player1 = player1
+        self.player2 = player2
 
         self.current_player = self.player1
         self.waiting_player = self.player2
@@ -297,8 +297,8 @@ class Quoridor:
         Starts the game and prompts the users to input their moves through the terminal.
 
         Returns:
-        -------
         GameResult
+        -------
             A named tuple that contains the outcome of the game and its associated
             metadata, including:
             * status: The status of the game at the end of play.
@@ -671,8 +671,10 @@ class Quoridor:
 
         self._remove_connections(board, wall)
 
+
 if __name__ == '__main__':
-    quoridor = Quoridor(
-        lambda id, pos, goal: MonteCarloPlayer(id, pos, goal, simulations=100),
-        lambda id, pos, goal: create_alpha_beta_player(id, pos, goal, depth=1))
+    alpha_beta_player_depth_1 = AlphaBetaPlayer(id = 1, pos = START_POS_P1, goal = GOAL_P1,depth=1,evaluation_function=both_goals_evaluation_function)
+    heuristic_player = HeuristicPlayer(id = 2, pos = START_POS_P2, goal = GOAL_P2,evaluation_function=self_dist_from_goal_evaluation_function)
+
+    quoridor = Quoridor(alpha_beta_player_depth_1,heuristic_player)
     quoridor.play_game()

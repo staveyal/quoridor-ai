@@ -46,14 +46,18 @@ class RandomPlayer(Player):
 
 
 class HeuristicPlayer(Player):
+    def __init__(self, id, pos, goal, evaluation_function, walls=START_WALLS, position_history=None, placed_walls=None):
+        super().__init__(id, pos, goal, walls, position_history, placed_walls)
+        self.evaluation_function = evaluation_function
+        self.position_history = []
+        self.placed_walls = []
+
     def get_action(self, game_state):
         best_move = game_state.get_legal_moves()[0]
         best_score = -math.inf
         for move in game_state.get_legal_moves():
             game_state.make_move(move)
-            game_state._switch_player()
-            score = self_dist_from_goal_evaluation_function(game_state)
-            game_state._switch_player()
+            score = self.evaluate_state(game_state)
             # print(f"pos: {game_state.current_player.pos}, move: {move}, score:{score}")
             game_state.undo_move()
             if score > best_score:
@@ -61,13 +65,20 @@ class HeuristicPlayer(Player):
                 best_move = move
         return best_move
 
+    def evaluate_state(self, game_state):
+        game_state._switch_player()
+        score = self.evaluation_function(game_state)
+        game_state._switch_player()
+        return score
+
 
 class AlphaBetaPlayer(Player):
-    def __init__(self, id, pos, goal, walls=START_WALLS, position_history=None, placed_walls=None, depth=1):
+    def __init__(self, id, pos, goal, evaluation_function, walls=START_WALLS, position_history=None, placed_walls=None, depth=1):
         super().__init__(id, pos, goal, walls, position_history, placed_walls)
         self.depth = depth
         self.position_history = []
         self.placed_walls = []
+        self.evaluation_function = evaluation_function
 
     def get_action(self, game_state):
         value, action = self.__recursive_minimax(game_state, self.depth, True, np.inf)
@@ -77,7 +88,7 @@ class AlphaBetaPlayer(Player):
         if game_state.status == GameStatus.COMPLETED:
             return (np.inf, "") if not is_max else (-np.inf, "")
         if depth == 0:
-            return both_goals_evaluation_function(game_state), game_state.get_legal_moves()[0]
+            return self.evaluation_function(game_state), game_state.get_legal_moves()[0]
         value = -np.inf if is_max else np.inf
         action = ""
         filtered = self.filter_moves(game_state.get_legal_moves(), game_state)
@@ -125,68 +136,4 @@ def smaller_or_equals_with_chance(value1, value2):
     return value1 < value2
 
 
-def null_evaluation_function(game_state):
-    return 0
 
-
-def self_dist_from_goal_evaluation_function(game_state):
-    return -get_player_dist_from_goal(game_state.current_player)
-
-
-def opponent_dist_from_goal_evaluation_function(game_state):
-    return get_player_dist_from_goal(game_state.waiting_player)
-
-
-def both_goals_evaluation_function(game_state):
-    lose_punishment_factor = 2
-    return self_dist_from_goal_evaluation_function(
-        game_state) + lose_punishment_factor * opponent_dist_from_goal_evaluation_function(game_state)
-
-
-def get_player_dist_from_goal(player):
-    return abs(int(player.pos[-1]) - int(player.goal))
-
-
-def create_player(id, pos, goal):
-    return Player(id=id, pos=pos, goal=goal)
-
-
-def create_heuristic_player(id, pos, goal):
-    return HeuristicPlayer(id=id, pos=pos, goal=goal)
-
-
-def create_ramdom_player(id, pos, goal):
-    return RandomPlayer(id=id, pos=pos, goal=goal)
-
-
-def create_alpha_beta_player(id, pos, goal, depth):
-    return AlphaBetaPlayer(id=id, pos=pos, goal=goal, depth=depth)
-
-
-class MonteCarloPlayer(Player):
-    def __init__(self, id, pos, goal, walls=START_WALLS, position_history=None, placed_walls=None, simulations=100):
-        super().__init__(id, pos, goal, walls, position_history, placed_walls)
-        self.simulations = simulations
-
-    def get_action(self, game_state):
-        legal_moves = game_state.get_legal_moves()
-        move_scores = {move: 0 for move in legal_moves}
-
-        for move in legal_moves:
-            for _ in range(self.simulations):
-                simulation_game = Quoridor.init_from_pgn(game_state.get_pgn())
-                simulation_game.make_move(move)
-                result = self.simulate_random_game(simulation_game)
-                if result == self.id:
-                    move_scores[move] += 1
-
-        best_move = max(move_scores, key=move_scores.get)
-        return best_move
-
-    def simulate_random_game(self, game_state):
-        while game_state.status == GameStatus.ONGOING:
-            legal_moves = game_state.get_legal_moves()
-            move = random.choice(legal_moves)
-            game_state.make_move(move)
-
-        return game_state.current_player.id if game_state.status == GameStatus.COMPLETED else -1
