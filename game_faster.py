@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Optional, Dict, List, Set
 
 from Constants import START_POS_P1, GOAL_P1, GOAL_P2, START_POS_P2, GameStatus, ALL_QUORIDOR_MOVES_REGEX, POSSIBLE_WALLS
-from Players import Player, create_player, create_alpha_beta_player
+from Players import Player, create_player, create_alpha_beta_player, create_heuristic_player
 from exceptions import (
     InvalidMoveError,
     IllegalPawnMoveError,
@@ -673,6 +673,6 @@ class Quoridor:
 
 if __name__ == '__main__':
     quoridor = Quoridor(
-        lambda id, pos, goal: create_alpha_beta_player(id, pos, goal, depth=0),
+        lambda id, pos, goal: create_heuristic_player(id, pos, goal),
         lambda id, pos, goal: create_alpha_beta_player(id, pos, goal, depth=1))
     quoridor.play_game()

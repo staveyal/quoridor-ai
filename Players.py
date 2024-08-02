@@ -51,7 +51,10 @@ class HeuristicPlayer(Player):
         best_score = -math.inf
         for move in game_state.get_legal_moves():
             game_state.make_move(move)
-            score = null_evaluation_function(game_state)
+            game_state._switch_player()
+            score = self_dist_from_goal_evaluation_function(game_state)
+            game_state._switch_player()
+            # print(f"pos: {game_state.current_player.pos}, move: {move}, score:{score}")
             game_state.undo_move()
             if score > best_score:
                 best_score = score
@@ -74,12 +77,12 @@ class AlphaBetaPlayer(Player):
         if game_state.status == GameStatus.COMPLETED:
             return (np.inf, "") if not is_max else (-np.inf, "")
         if depth == 0:
-            return self.evaluation_function(game_state), game_state.get_legal_moves()[0]
+            return both_goals_evaluation_function(game_state), game_state.get_legal_moves()[0]
         value = -np.inf if is_max else np.inf
         action = ""
-        filterd = self.filter_moves(game_state.get_legal_moves(), game_state)
-        # print(filterd)
-        for next_action in filterd:
+        filtered = self.filter_moves(game_state.get_legal_moves(), game_state)
+        # print(filtered)
+        for next_action in filtered:
             game_state.make_move(next_action)
             next_value, _ = self.__recursive_minimax(game_state, depth - 1 if not is_max else depth, not is_max, value)
             game_state.undo_move()
@@ -146,6 +149,10 @@ def get_player_dist_from_goal(player):
 
 def create_player(id, pos, goal):
     return Player(id=id, pos=pos, goal=goal)
+
+
+def create_heuristic_player(id, pos, goal):
+    return HeuristicPlayer(id=id, pos=pos, goal=goal)
 
 
 def create_ramdom_player(id, pos, goal):
