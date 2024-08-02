@@ -393,6 +393,7 @@ class Quoridor:
                 self.board[cell_pair[0]].append(cell_pair[1])
 
         self._switch_player()
+        self.game_status = GameStatus.ONGOING
 
     def play_game(self) -> GameResult:
         """

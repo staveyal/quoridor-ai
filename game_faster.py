@@ -217,6 +217,7 @@ class Quoridor:
             self._make_pawn_move(move)
             if self.current_player.pos[1] == self.current_player.goal:
                 self.status = GameStatus.COMPLETED
+                self._switch_player()
                 return
         else:
             self._make_wall_move(self.board, move)
@@ -288,6 +289,7 @@ class Quoridor:
                 self.board[cell_pair[0]].append(cell_pair[1])
 
         self._switch_player()
+        self.status = GameStatus.ONGOING
 
     def play_game(self) -> GameResult:
         """
@@ -670,5 +672,5 @@ class Quoridor:
 if __name__ == '__main__':
     quoridor = Quoridor(
         lambda id, pos, goal: create_alpha_beta_player(id, pos, goal, depth=1),
-        lambda id, pos, goal: create_alpha_beta_player(id, pos, goal, depth=2))
+        lambda id, pos, goal: create_alpha_beta_player(id, pos, goal, depth=1))
     quoridor.play_game()

@@ -56,10 +56,10 @@ class AlphaBetaPlayer(Player):
         return action
 
     def __recursive_minimax(self, game_state, depth, is_max, best_other):
-        if depth == 0 or len(game_state.get_legal_moves()) == 0:
-            return self.evaluation_function(game_state), ""
         if game_state.status == GameStatus.COMPLETED:
             return (np.inf, "") if game_state.winner == self.id else (-np.inf, "")
+        if depth == 0 or len(game_state.get_legal_moves()) == 0:
+            return self.evaluation_function(game_state), ""
         value = -np.inf if is_max else np.inf
         action = ""
         filterd = self.filter_moves(game_state.get_legal_moves(), game_state)
@@ -101,7 +101,7 @@ class AlphaBetaPlayer(Player):
         return filtered_moves
 
     def evaluation_function(self, game_state):
-        return -abs(int(game_state.current_player.pos[-1]) - int(game_state.current_player.goal)) + 2 * abs(int(game_state.waiting_player.pos[-1]) - int(game_state.waiting_player.goal))
+        return -abs(int(game_state.current_player.pos[-1]) - int(game_state.current_player.goal))  # + 2 * abs(int(game_state.waiting_player.pos[-1]) - int(game_state.waiting_player.goal))
 
 
 def create_player(id, pos, goal):
