@@ -73,7 +73,7 @@ class GameCompletedError(Exception):
         Defaults to "You cant't make a move since the game is over.".
     """
 
-    def __init__(self, message="You cant't make a move since the game is over."):
+    def __init__(self, message="You can't make a move since the game is over."):
         self.message = message
         super().__init__(self.message)
 

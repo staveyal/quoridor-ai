@@ -85,7 +85,7 @@ class Quoridor:
         self.waiting_player = self.player2
         self.placed_walls = []
         self.moves = []
-        self.status = (GameStatus.ONGOING)
+        self.status = GameStatus.ONGOING
         self.is_terminated = False
         self.winner = 0
 
@@ -140,7 +140,8 @@ class Quoridor:
         """
         self.__init__()
 
-    def _create_board(self) -> Dict[str, List[str]]:
+    @staticmethod
+    def _create_board() -> Dict[str, List[str]]:
         """
         Creates and returns a dictionary representing the Quoridor board,
         with each key representing a cell and its value being a list of connected cells.
@@ -460,7 +461,7 @@ class Quoridor:
         """
         if node not in visited:
             visited.add(node)
-            for neighbour in sorted(graph[node], key=lambda x:-abs(int(x[1]) - int(goal))):
+            for neighbour in sorted(graph[node]):
                 if neighbour[1] == goal:
                     return True
                 if self._dfs(visited, graph, neighbour, goal):
@@ -598,7 +599,8 @@ class Quoridor:
                 return True
         return False
 
-    def _wall_out_of_bounds(self, wall) -> bool:
+    @staticmethod
+    def _wall_out_of_bounds(wall) -> bool:
         """
         Check if the given wall is out of bounds.
 
