@@ -87,7 +87,7 @@ class AlphaBetaPlayer(Player):
     def __recursive_minimax(self, game_state, depth, is_max, best_other):
         if game_state.status == GameStatus.COMPLETED:
             return (np.inf, "") if not is_max else (-np.inf, "")
-        if depth == 0:
+        if depth <= 0:
             return self.evaluation_function(game_state), game_state.get_legal_moves()[0]
         value = -np.inf if is_max else np.inf
         action = ""
@@ -95,7 +95,8 @@ class AlphaBetaPlayer(Player):
         # print(filtered)
         for next_action in filtered:
             game_state.make_move(next_action)
-            next_value, _ = self.__recursive_minimax(game_state, depth - 1 if not is_max else depth, not is_max, value)
+            depth_sub = 3 if len(next_action) == 3 else 1
+            next_value, _ = self.__recursive_minimax(game_state, depth - depth_sub if not is_max else depth, not is_max, value)
             game_state.undo_move()
             if is_max:
                 if smaller_or_equals_with_chance(value, next_value):
