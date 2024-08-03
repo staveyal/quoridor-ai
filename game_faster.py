@@ -713,15 +713,15 @@ if __name__ == '__main__':
         print(f"Factor: {factor}, Winner: Player {result.winner}, Total Moves: {result.total_moves}")
 
         # Print win statistics
-        print("Win statistics:", win_stats)
+    print("Win statistics:", win_stats)
 
-        # Plot number of moves per factor
-        plt.figure(figsize=(10, 6))
-        plt.plot(factors, moves_per_factor, marker='o', linestyle='-', color='b')
-        plt.title("Number of Moves per Factor")
-        plt.xlabel("Factor")
-        plt.ylabel("Total Moves")
-        plt.grid(True)
+    # Plot number of moves per factor
+    plt.figure(figsize=(10, 6))
+    plt.plot(factors, moves_per_factor, marker='o', linestyle='-', color='b')
+    plt.title("Number of Moves per Factor")
+    plt.xlabel("Factor")
+    plt.ylabel("Total Moves")
+    plt.grid(True)
 
-        # Save the graph to a file
-        plt.savefig('number_of_moves_per_factor.png')
+    # Save the graph to a file
+    plt.savefig('number_of_moves_per_factor.png')
