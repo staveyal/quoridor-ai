@@ -57,7 +57,7 @@ class HeuristicPlayer(Player):
         best_score = -math.inf
         for move in game_state.get_legal_moves():
             game_state.make_move(move)
-            score = self.evaluate_state(game_state)
+            score = self.__evaluate_state(game_state)
             # print(f"pos: {game_state.current_player.pos}, move: {move}, score:{score}")
             game_state.undo_move()
             if score > best_score:
@@ -65,7 +65,7 @@ class HeuristicPlayer(Player):
                 best_move = move
         return best_move
 
-    def evaluate_state(self, game_state):
+    def __evaluate_state(self, game_state):
         game_state._switch_player()
         score = self.evaluation_function(game_state)
         game_state._switch_player()
