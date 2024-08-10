@@ -64,10 +64,13 @@ class HeuristicPlayer(Player):
             moves = filter_moves(game_state)
         best_move = moves[0]
         best_score = -math.inf
+        if len(moves)<3:
+            print(moves)
+            print(game_state.get_legal_moves())
         for move in moves:
             game_state.make_move(move)
             score = self.__evaluate_state(game_state)
-            print(f"pos: {game_state.current_player.pos}, move: {move}, score:{score}")
+            print(f"move: {move}, score:{score}")
             game_state.undo_move()
             if score > best_score:
                 best_score = score
@@ -137,6 +140,7 @@ def filter_moves(game_state):
             for wall in game_state.placed_walls:
                 if dist_from_cell(move, wall[:2]) <= 1:
                     filtered_moves.append(move)
+                    break
     return filtered_moves
 
 

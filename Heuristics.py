@@ -41,6 +41,7 @@ def statistic_simulation_random_player(game_state, num_to_simulate):
 
         for wall in game_state.placed_walls:
             quoridor._make_wall_move(quoridor.board, wall)
+        quoridor._switch_player()
         result = quoridor.play_game(simulate=True)
         wins[result.winner.id] += 1
     return wins[0] / num_to_simulate
