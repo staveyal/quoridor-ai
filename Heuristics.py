@@ -24,6 +24,12 @@ def both_goals_evaluation_function(game_state, opponent_factor):
         game_state) + opponent_factor * opponent_dist_from_goal_evaluation_function(game_state)
 
 
+def prevent_loop_function(game_state, opponent_factor):
+    loop_penalty = len(game_state.current_player.position_history) - len(set(game_state.current_player.position_history))
+    return self_dist_from_goal_evaluation_function(
+        game_state) + opponent_factor * opponent_dist_from_goal_evaluation_function(game_state) - loop_penalty * 10
+
+
 def statistic_simulation_random_player(game_state, num_to_simulate):
     wins = [0, 0]
     for _ in range(num_to_simulate):
@@ -45,3 +51,27 @@ def statistic_simulation_random_player(game_state, num_to_simulate):
         result = quoridor.play_game(simulate=True)
         wins[result.winner.id] += 1
     return wins[0] / num_to_simulate
+
+
+def clean_board_ahead_player(game_state):
+    count = 0
+    for wall in game_state.placed_walls:
+        if game_state.current_player.position < wall[1] < game_state.current_player.goal or \
+                game_state.current_player.position > wall[1] > game_state.current_player.goal:
+            count += 1
+    return -count
+
+
+def dirty_board_ahead_opponent(game_state):
+    count = 0
+    for wall in game_state.placed_walls:
+        if game_state.waiting_player.goal < wall[1] < game_state.waiting_player.position or \
+                game_state.waiting_player.goal > wall[1] > game_state.waiting_player.position:
+            count += 1
+    return count
+
+
+def opponent_walls(game_state):
+    return -game_state.waiting_player.walls
+
+
