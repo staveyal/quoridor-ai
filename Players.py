@@ -58,15 +58,12 @@ class HeuristicPlayer(Player):
         self.placed_walls = []
 
     def get_action(self, game_state):
-        if self.just_movement:
-            moves = game_state.get_legal_pawn_moves()
+        if random.random() < .5 or self.just_movement:
+            moves = list(game_state.get_legal_pawn_moves())
         else:
             moves = filter_moves(game_state)
         best_move = moves[0]
         best_score = -math.inf
-        if len(moves)<3:
-            print(moves)
-            print(game_state.get_legal_moves())
         for move in moves:
             game_state.make_move(move)
             score = self.__evaluate_state(game_state)
