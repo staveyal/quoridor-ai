@@ -61,13 +61,13 @@ class HeuristicPlayer(Player):
         if self.just_movement:
             moves = game_state.get_legal_pawn_moves()
         else:
-            moves = game_state.get_legal_moves()
+            moves = filter_moves(game_state)
         best_move = moves[0]
         best_score = -math.inf
         for move in moves:
             game_state.make_move(move)
             score = self.__evaluate_state(game_state)
-            # print(f"pos: {game_state.current_player.pos}, move: {move}, score:{score}")
+            print(f"pos: {game_state.current_player.pos}, move: {move}, score:{score}")
             game_state.undo_move()
             if score > best_score:
                 best_score = score

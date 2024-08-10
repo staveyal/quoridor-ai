@@ -9,8 +9,9 @@ import numpy as np
 
 from Constants import START_POS_P1, GOAL_P1, GOAL_P2, START_POS_P2, GameStatus, ALL_QUORIDOR_MOVES_REGEX, \
     POSSIBLE_WALLS, START_WALLS
-from Heuristics import both_goals_evaluation_function, self_dist_from_goal_evaluation_function
 from Players import Player, AlphaBetaPlayer, HeuristicPlayer, RandomPlayer
+
+
 from exceptions import (
     InvalidMoveError,
     IllegalPawnMoveError,
@@ -19,6 +20,8 @@ from exceptions import (
     GameCompletedError,
     NothingToUndoError,
 )
+
+
 
 @dataclass
 class GameResult:
@@ -292,7 +295,7 @@ class Quoridor:
         self._switch_player()
         self.status = GameStatus.ONGOING
 
-    def play_game(self) -> GameResult:
+    def play_game(self,simulate=False) -> GameResult:
         """
         Starts the game and prompts the users to input their moves through the terminal.
 
@@ -309,14 +312,15 @@ class Quoridor:
             * pgn: The Portable Game Notation representation of the game's moves.
         """
         while not self.status == GameStatus.COMPLETED:
-            print(f"current player: {self.current_player}")
-            print(f"waiting player: {self.waiting_player}")
-            #print(f"legal_moves {self.get_legal_moves()}")
-            # print()
-            # print_quoridor_board(self.current_player, self.waiting_player, self.get_legal_moves())
             command = self.current_player.get_action(self)
-            print(f"{self.current_player.id}: {self.current_player.pos}->{command}")
-            print("-------------------------------------------------------------------------------")
+            if not simulate:
+                print(f"current player: {self.current_player}")
+                print(f"waiting player: {self.waiting_player}")
+                #print(f"legal_moves {self.get_legal_moves()}")
+                # print()
+                # print_quoridor_board(self.current_player, self.waiting_player, self.get_legal_moves())
+                print(f"{self.current_player.id}: {self.current_player.pos}->{command}")
+                print("-------------------------------------------------------------------------------")
             if command == "q":
                 self.status = GameStatus.CANCELLED
                 return GameResult(
@@ -670,56 +674,3 @@ class Quoridor:
         self.current_player.walls -= 1
 
         self._remove_connections(board, wall)
-
-if __name__ == '__main__':
-    # # alpha_beta_player_depth_1 = AlphaBetaPlayer(id = 1, pos = START_POS_P1, goal = GOAL_P1,depth=1,evaluation_function=both_goals_evaluation_function)
-    # heuristic_player_factor_1 = HeuristicPlayer(id = 1, pos = START_POS_P1, goal = GOAL_P1,evaluation_function=lambda x: both_goals_evaluation_function(x,1))
-    # heuristic_player_factor_2 = HeuristicPlayer(id = 2, pos = START_POS_P2, goal = GOAL_P2,evaluation_function=lambda x: both_goals_evaluation_function(x,2))
-    #
-    # quoridor = Quoridor(heuristic_player_factor_1,heuristic_player_factor_2)
-    # result = quoridor.play_game()
-    # print(result.winner)
-
-    # Range of factors
-    # factors = np.arange(-2, 8, 1)
-    #
-    # # Statistics dictionary
-    # win_stats = {1: 0, 2: 0}
-    # moves_per_factor = []
-    #
-    # # Run the games
-    # for factor in factors:
-        heuristic_player_factor_1 = AlphaBetaPlayer(
-            id=1,
-            pos=START_POS_P1,
-            goal=GOAL_P1,
-            depth=1,
-            evaluation_function=lambda x: both_goals_evaluation_function(x, 1)
-        )
-        random_player = RandomPlayer(
-            id=2,
-            pos=START_POS_P2,
-            goal=GOAL_P2,
-        )
-
-        quoridor = Quoridor(heuristic_player_factor_1, random_player)
-        result = quoridor.play_game()
-
-        # Update win stats
-    #     win_stats[result.winner.id] += 1
-    #     moves_per_factor.append(result.total_moves)
-    #     print(f"Factor: {factor}, Winner: Player {result.winner}, Total Moves: {result.total_moves}")
-    #
-    #     # Print win statistics
-    # print("Win statistics:", win_stats)
-    #
-    # # Plot number of moves per factor
-    # plt.figure(figsize=(10, 6))
-    # plt.plot(factors, moves_per_factor, marker='o', linestyle='-', color='b')
-    # plt.title("Number of Moves per Factor")
-    # plt.xlabel("Factor")
-    # plt.ylabel("Total Moves")
-    # plt.grid(True)
-    #
-    # # Save the graph to a file
-    # plt.savefig('number_of_moves_per_factor.png')
