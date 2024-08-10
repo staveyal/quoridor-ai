@@ -42,20 +42,29 @@ class Player:
 
 class RandomPlayer(Player):
     def get_action(self, game_state):
-        return random.choice(game_state.get_legal_moves())
+        if random.random() < .5:
+            moves = list(game_state.get_legal_pawn_moves())
+        else:
+            moves = filter_moves(game_state)
+        return random.choice(moves)
 
 
 class HeuristicPlayer(Player):
-    def __init__(self, id, pos, goal, evaluation_function, walls=START_WALLS, position_history=None, placed_walls=None):
+    def __init__(self, id, pos, goal, evaluation_function, walls=START_WALLS, position_history=None, placed_walls=None, just_movement=False):
         super().__init__(id, pos, goal, walls, position_history, placed_walls)
         self.evaluation_function = evaluation_function
+        self.just_movement = just_movement
         self.position_history = []
         self.placed_walls = []
 
     def get_action(self, game_state):
-        best_move = game_state.get_legal_moves()[0]
+        if self.just_movement:
+            moves = game_state.get_legal_pawn_moves()
+        else:
+            moves = game_state.get_legal_moves()
+        best_move = moves[0]
         best_score = -math.inf
-        for move in game_state.get_legal_moves():
+        for move in moves:
             game_state.make_move(move)
             score = self.__evaluate_state(game_state)
             # print(f"pos: {game_state.current_player.pos}, move: {move}, score:{score}")
@@ -91,7 +100,7 @@ class AlphaBetaPlayer(Player):
             return self.evaluation_function(game_state), game_state.get_legal_moves()[0]
         value = -np.inf if is_max else np.inf
         action = ""
-        filtered = self.filter_moves(game_state.get_legal_moves(), game_state)
+        filtered = filter_moves(game_state)
         # print(filtered)
         for next_action in filtered:
             game_state.make_move(next_action)
@@ -112,23 +121,23 @@ class AlphaBetaPlayer(Player):
                     break
         return value, action
 
-    def dist_from_cell(self, move, pos):
-        return max(abs(ord(move[0]) - ord(pos[0])), abs(ord(move[1]) - ord(pos[1])))
+def dist_from_cell(move, pos):
+    return max(abs(ord(move[0]) - ord(pos[0])), abs(ord(move[1]) - ord(pos[1])))
 
-    def filter_moves(self, legal_moves, game_state):
-        filtered_moves = []
-        for move in legal_moves:
-            if len(move) == 2:
-                filtered_moves.append(move)
-            elif self.dist_from_cell(move, game_state.current_player.pos) <= 1:
-                filtered_moves.append(move)
-            elif self.dist_from_cell(move, game_state.waiting_player.pos) <= 1:
-                filtered_moves.append(move)
-            else:
-                for wall in game_state.placed_walls:
-                    if self.dist_from_cell(move, wall[:2]) <= 1:
-                        filtered_moves.append(move)
-        return filtered_moves
+def filter_moves(game_state):
+    filtered_moves = []
+    for move in game_state.get_legal_moves():
+        if len(move) == 2:
+            filtered_moves.append(move)
+        elif dist_from_cell(move, game_state.current_player.pos) <= 1:
+            filtered_moves.append(move)
+        elif dist_from_cell(move, game_state.waiting_player.pos) <= 1:
+            filtered_moves.append(move)
+        else:
+            for wall in game_state.placed_walls:
+                if dist_from_cell(move, wall[:2]) <= 1:
+                    filtered_moves.append(move)
+    return filtered_moves
 
 
 def smaller_or_equals_with_chance(value1, value2):

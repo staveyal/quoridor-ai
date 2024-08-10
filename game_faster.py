@@ -10,7 +10,7 @@ import numpy as np
 from Constants import START_POS_P1, GOAL_P1, GOAL_P2, START_POS_P2, GameStatus, ALL_QUORIDOR_MOVES_REGEX, \
     POSSIBLE_WALLS, START_WALLS
 from Heuristics import both_goals_evaluation_function, self_dist_from_goal_evaluation_function
-from Players import Player, AlphaBetaPlayer, HeuristicPlayer
+from Players import Player, AlphaBetaPlayer, HeuristicPlayer, RandomPlayer
 from exceptions import (
     InvalidMoveError,
     IllegalPawnMoveError,
@@ -681,14 +681,14 @@ if __name__ == '__main__':
     # print(result.winner)
 
     # Range of factors
-    factors = np.arange(-2, 8, 1)
-
-    # Statistics dictionary
-    win_stats = {1: 0, 2: 0}
-    moves_per_factor = []
-
-    # Run the games
-    for factor in factors:
+    # factors = np.arange(-2, 8, 1)
+    #
+    # # Statistics dictionary
+    # win_stats = {1: 0, 2: 0}
+    # moves_per_factor = []
+    #
+    # # Run the games
+    # for factor in factors:
         heuristic_player_factor_1 = AlphaBetaPlayer(
             id=1,
             pos=START_POS_P1,
@@ -696,32 +696,30 @@ if __name__ == '__main__':
             depth=1,
             evaluation_function=lambda x: both_goals_evaluation_function(x, 1)
         )
-        heuristic_player_factor_2 = AlphaBetaPlayer(
+        random_player = RandomPlayer(
             id=2,
             pos=START_POS_P2,
             goal=GOAL_P2,
-            depth=1,
-            evaluation_function=lambda x: both_goals_evaluation_function(x, factor)
         )
 
-        quoridor = Quoridor(heuristic_player_factor_1, heuristic_player_factor_2)
+        quoridor = Quoridor(heuristic_player_factor_1, random_player)
         result = quoridor.play_game()
 
         # Update win stats
-        win_stats[result.winner.id] += 1
-        moves_per_factor.append(result.total_moves)
-        print(f"Factor: {factor}, Winner: Player {result.winner}, Total Moves: {result.total_moves}")
-
-        # Print win statistics
-    print("Win statistics:", win_stats)
-
-    # Plot number of moves per factor
-    plt.figure(figsize=(10, 6))
-    plt.plot(factors, moves_per_factor, marker='o', linestyle='-', color='b')
-    plt.title("Number of Moves per Factor")
-    plt.xlabel("Factor")
-    plt.ylabel("Total Moves")
-    plt.grid(True)
-
-    # Save the graph to a file
-    plt.savefig('number_of_moves_per_factor.png')
+    #     win_stats[result.winner.id] += 1
+    #     moves_per_factor.append(result.total_moves)
+    #     print(f"Factor: {factor}, Winner: Player {result.winner}, Total Moves: {result.total_moves}")
+    #
+    #     # Print win statistics
+    # print("Win statistics:", win_stats)
+    #
+    # # Plot number of moves per factor
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(factors, moves_per_factor, marker='o', linestyle='-', color='b')
+    # plt.title("Number of Moves per Factor")
+    # plt.xlabel("Factor")
+    # plt.ylabel("Total Moves")
+    # plt.grid(True)
+    #
+    # # Save the graph to a file
+    # plt.savefig('number_of_moves_per_factor.png')
