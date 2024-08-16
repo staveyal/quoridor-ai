@@ -1,6 +1,7 @@
 import random
 import string
 import pickle
+from collections import deque
 from dataclasses import dataclass
 from typing import Optional, Dict, List, Set
 import matplotlib.pyplot as plt
@@ -420,6 +421,40 @@ class Quoridor:
             raise IllegalWallPlacementError(
                 message="Illegal wall placement, opponent cannot reach goal"
             )
+
+    from collections import deque
+
+    def get_shortest_path(self, start: str, goal: str) -> List[str]:
+        """
+        Find the shortest path from start to goal on the Quoridor board.
+
+        Parameters:
+        -----------
+        start : str
+            The starting position (e.g., 'e1').
+        goal : str
+            The goal position (e.g., 'e9').
+
+        Returns:
+        --------
+        List[str]
+            A list of positions representing the shortest path from start to goal.
+            Returns an empty list if no path is found.
+        """
+        queue = deque([(start, [start])])
+        visited = set()
+
+        while queue:
+            (vertex, path) = queue.popleft()
+            if vertex not in visited:
+                if vertex[1] == goal:
+                    return path
+                visited.add(vertex)
+                for neighbor in self.board[vertex]:
+                    if neighbor not in visited:
+                        queue.append((neighbor, path + [neighbor]))
+
+        return []  # No path found
 
     def _is_reachable(self, board, player_pos, player_goal) -> bool:
         """

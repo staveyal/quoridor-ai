@@ -1,3 +1,5 @@
+import math
+
 from Constants import GOAL_P2, GOAL_P1
 from Players import RandomPlayer
 from game_faster import Quoridor
@@ -8,18 +10,18 @@ def null_evaluation_function(game_state):
 
 
 def self_dist_from_goal_evaluation_function(game_state):
-    return -__get_player_dist_from_goal(game_state.current_player)
+    return -math.exp(-__get_player_dist_from_goal(game_state.current_player))
 
 
 def opponent_dist_from_goal_evaluation_function(game_state):
-    return __get_player_dist_from_goal(game_state.waiting_player)
+    return math.exp(__get_player_dist_from_goal(game_state.waiting_player))
 
 
 def __get_player_dist_from_goal(player):
     return abs(int(player.pos[-1]) - int(player.goal))
 
 
-def both_goals_evaluation_function(game_state, opponent_factor):
+def both_goals_evaluation_function(game_state, opponent_factor=1):
     return self_dist_from_goal_evaluation_function(
         game_state) + opponent_factor * opponent_dist_from_goal_evaluation_function(game_state)
 
@@ -75,3 +77,46 @@ def opponent_walls(game_state):
     return -game_state.waiting_player.walls
 
 
+def wall_efficiency_heuristic(game_state):
+    opponent = game_state.waiting_player
+    current_path_length = len(game_state.get_shortest_path(opponent.pos, opponent.goal))
+    total_path_increase = 0
+
+    for wall in game_state.current_player.placed_walls:
+        # Create a temporary copy of the board
+        temp_board = {k: v[:] for k, v in game_state.board.items()}
+
+        # Temporarily remove the wall
+        game_state._remove_connections(temp_board, wall)
+
+        # Calculate the new path length without the wall
+        new_path_length = len(game_state.get_shortest_path(opponent.pos, opponent.goal))
+
+        # Calculate the increase in path length
+        path_increase = new_path_length - current_path_length
+        total_path_increase += path_increase
+
+        # We don't need to add the wall back since we're working with a copy
+
+    return total_path_increase
+
+
+def blocking_opponent_path_heuristic(game_state):
+    opponent = game_state.waiting_player
+    opponent_path = game_state.get_shortest_path(opponent.pos, opponent.goal)
+    blocking_walls = 0
+
+    for wall in game_state.current_player.placed_walls:
+        if any(wall[:2] == step or wall[2:] == step for step in opponent_path):
+            blocking_walls += 1
+
+    return blocking_walls
+
+
+def combined_heuristic(game_state):
+    return (
+        both_goals_evaluation_function(game_state) +
+        2 * wall_efficiency_heuristic(game_state) +
+        blocking_opponent_path_heuristic(game_state) -
+        0.5 * opponent_walls(game_state)
+    )

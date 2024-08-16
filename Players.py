@@ -35,6 +35,7 @@ class Player:
     walls: int = START_WALLS
     position_history: List[str] = field(default_factory=lambda: [])
     placed_walls: List[str] = field(default_factory=lambda: [])
+    is_wall_first_game: bool = False
 
     def get_action(self, game_state):
         return input("Your move: ")
@@ -42,7 +43,9 @@ class Player:
 
 class RandomPlayer(Player):
     def get_action(self, game_state):
-        if random.random() < .5:
+        if self.is_wall_first_game:
+            moves = [move for move in filter_moves(game_state) if len(move) == 3]
+        elif random.random() < .5:
             moves = list(game_state.get_legal_pawn_moves())
         else:
             moves = filter_moves(game_state)
@@ -50,15 +53,17 @@ class RandomPlayer(Player):
 
 
 class HeuristicPlayer(Player):
-    def __init__(self, id, pos, goal, evaluation_function, walls=START_WALLS, position_history=None, placed_walls=None, just_movement=False):
-        super().__init__(id, pos, goal, walls, position_history, placed_walls)
+    def __init__(self, id, pos, goal, evaluation_function,is_wall_first_game,walls=START_WALLS, position_history=None, placed_walls=None, just_movement=False):
+        super().__init__(id, pos, goal, walls, position_history, placed_walls,is_wall_first_game)
         self.evaluation_function = evaluation_function
         self.just_movement = just_movement
         self.position_history = []
         self.placed_walls = []
 
     def get_action(self, game_state):
-        if random.random() < .5 or self.just_movement:
+        if self.is_wall_first_game:
+            moves = [move for move in filter_moves(game_state) if len(move) == 3]
+        elif random.random() < .5 or self.just_movement: # So it would make moves and not only walls
             moves = list(game_state.get_legal_pawn_moves())
         else:
             moves = filter_moves(game_state)
@@ -82,8 +87,8 @@ class HeuristicPlayer(Player):
 
 
 class AlphaBetaPlayer(Player):
-    def __init__(self, id, pos, goal, evaluation_function, walls=START_WALLS, position_history=None, placed_walls=None, depth=1):
-        super().__init__(id, pos, goal, walls, position_history, placed_walls)
+    def __init__(self, id, pos, goal, evaluation_function, is_wall_first_game,walls=START_WALLS, position_history=None, placed_walls=None, depth=1):
+        super().__init__(id, pos, goal, walls, position_history, placed_walls,is_wall_first_game)
         self.depth = depth
         self.position_history = []
         self.placed_walls = []
@@ -100,7 +105,10 @@ class AlphaBetaPlayer(Player):
             return self.evaluation_function(game_state), game_state.get_legal_moves()[0]
         value = -np.inf if is_max else np.inf
         action = ""
-        filtered = filter_moves(game_state)
+        if self.is_wall_first_game:
+            filtered = [move for move in filter_moves(game_state) if len(move) == 3]
+        else:
+            filtered = filter_moves(game_state)
         # print(filtered)
         for next_action in filtered:
             game_state.make_move(next_action)
