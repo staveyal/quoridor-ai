@@ -45,6 +45,10 @@ class RandomPlayer(Player):
     def get_action(self, game_state):
         if self.is_wall_first_game:
             moves = [move for move in filter_moves(game_state) if len(move) == 3]
+            if len(moves) == 0:
+                # moves = list(game_state.get_legal_pawn_moves())
+                print(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal))
+                print(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal))
         elif random.random() < .5:
             moves = list(game_state.get_legal_pawn_moves())
         else:
@@ -63,7 +67,11 @@ class HeuristicPlayer(Player):
     def get_action(self, game_state):
         if self.is_wall_first_game:
             moves = [move for move in filter_moves(game_state) if len(move) == 3]
-        elif random.random() < .5 or self.just_movement: # So it would make moves and not only walls
+            if len(moves) == 0:
+                # moves = list(game_state.get_legal_pawn_moves())
+                print(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal))
+                print(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal))
+        elif self.just_movement: # So it would make moves and not only walls # random.random() < .5 or
             moves = list(game_state.get_legal_pawn_moves())
         else:
             moves = filter_moves(game_state)
@@ -107,6 +115,10 @@ class AlphaBetaPlayer(Player):
         action = ""
         if self.is_wall_first_game:
             filtered = [move for move in filter_moves(game_state) if len(move) == 3]
+            if len(filtered) == 0:
+                print(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal))
+                print(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal))
+                return
         else:
             filtered = filter_moves(game_state)
         # print(filtered)

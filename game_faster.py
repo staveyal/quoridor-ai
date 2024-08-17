@@ -476,7 +476,7 @@ class Quoridor:
             True if the player can reach their goal, False otherwise.
         """
 
-        return self._dfs(set(), board, player_pos, player_goal)
+        return not self.get_shortest_path( player_pos, player_goal) == []
 
     def _dfs(self, visited, graph, node, goal):
         """

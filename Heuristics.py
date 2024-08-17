@@ -10,11 +10,11 @@ def null_evaluation_function(game_state):
 
 
 def self_dist_from_goal_evaluation_function(game_state):
-    return -math.exp(-__get_player_dist_from_goal(game_state.current_player))
-
+    # return math.exp(-__get_player_dist_from_goal(game_state.current_player))
+    return math.exp(-len(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal)))
 
 def opponent_dist_from_goal_evaluation_function(game_state):
-    return math.exp(__get_player_dist_from_goal(game_state.waiting_player))
+    return -math.exp(-len(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal)))
 
 
 def __get_player_dist_from_goal(player):
@@ -77,28 +77,14 @@ def opponent_walls(game_state):
     return -game_state.waiting_player.walls
 
 
-def wall_efficiency_heuristic(game_state):
+def walls_dist_heuristic(game_state):
     opponent = game_state.waiting_player
-    current_path_length = len(game_state.get_shortest_path(opponent.pos, opponent.goal))
-    total_path_increase = 0
+    total_dist = 0
 
-    for wall in game_state.current_player.placed_walls:
-        # Create a temporary copy of the board
-        temp_board = {k: v[:] for k, v in game_state.board.items()}
+    for wall in game_state.placed_walls:
+        total_dist += max(abs(ord(opponent.pos[0]) - ord(wall[0])), abs(ord(opponent.pos[1]) - ord(wall[1])))
 
-        # Temporarily remove the wall
-        game_state._remove_connections(temp_board, wall)
-
-        # Calculate the new path length without the wall
-        new_path_length = len(game_state.get_shortest_path(opponent.pos, opponent.goal))
-
-        # Calculate the increase in path length
-        path_increase = new_path_length - current_path_length
-        total_path_increase += path_increase
-
-        # We don't need to add the wall back since we're working with a copy
-
-    return total_path_increase
+    return -total_dist
 
 
 def blocking_opponent_path_heuristic(game_state):
@@ -112,11 +98,10 @@ def blocking_opponent_path_heuristic(game_state):
 
     return blocking_walls
 
+def shortest_opponent_path(game_state):
+    return len(game_state.get_shortest_path(game_state.waiting_player.pos, game_state.waiting_player.goal))
 
 def combined_heuristic(game_state):
     return (
-        both_goals_evaluation_function(game_state) +
-        2 * wall_efficiency_heuristic(game_state) +
-        blocking_opponent_path_heuristic(game_state) -
-        0.5 * opponent_walls(game_state)
+        self_dist_from_goal_evaluation_function(game_state)
     )

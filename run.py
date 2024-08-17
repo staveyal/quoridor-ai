@@ -1,5 +1,6 @@
 from Constants import START_POS_P1, GOAL_P1, START_POS_P2, GOAL_P2
-from Heuristics import both_goals_evaluation_function, statistic_simulation_random_player, combined_heuristic
+from Heuristics import both_goals_evaluation_function, statistic_simulation_random_player, combined_heuristic, \
+    walls_dist_heuristic, shortest_opponent_path
 from Players import AlphaBetaPlayer, RandomPlayer, HeuristicPlayer
 from game_faster import Quoridor
 
@@ -22,18 +23,25 @@ if __name__ == '__main__':
     # result = quoridor.play_game()
 
     alphabeta_player = AlphaBetaPlayer(
+        id=2,
+        pos=START_POS_P2,
+        goal=GOAL_P2,
+        depth=2,
+        evaluation_function=lambda x: both_goals_evaluation_function(x, 0.5),
+        is_wall_first_game=False
+    )
+    heuristic_player = HeuristicPlayer(
         id=1,
         pos=START_POS_P1,
         goal=GOAL_P1,
-        depth=2,
-        evaluation_function=lambda x: both_goals_evaluation_function(x, 0.5),
-        is_wall_first_game=True
+        evaluation_function=lambda x: combined_heuristic(x),
+        is_wall_first_game=False
     )
     random_player = RandomPlayer(
         id=2,
         pos=START_POS_P2,
         goal=GOAL_P2,
-        is_wall_first_game=True
+        is_wall_first_game=False
     )
     new_alphabeta_player = AlphaBetaPlayer(
         id=1,
@@ -44,6 +52,7 @@ if __name__ == '__main__':
         is_wall_first_game=True
     )
 
-    quoridor = Quoridor(alphabeta_player, random_player)
+    # quoridor = Quoridor(heuristic_player, random_player)
+    quoridor = Quoridor(alphabeta_player, heuristic_player)
     result = quoridor.play_game()
 
