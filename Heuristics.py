@@ -6,42 +6,86 @@ from game_faster import Quoridor
 
 
 def null_evaluation_function(game_state):
+    """
+    Null evaluation
+    """
     return 0
 
 
 def exp_shortest_self_dist_from_goal_evaluation_function(game_state):
+    """
+    Exponential distance of current player to its goal, uses the shortest path
+    """
     return math.exp(-len(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal)))
 
+
 def shortest_self_dist_from_goal_evaluation_function(game_state):
+    """
+    Distance of current player to its goal, uses the shortest path
+    """
     return -len(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal))
 
+
 def naive_self_dist_from_goal_evaluation_function(game_state):
+    """
+    Distance of current player to its goal, uses the naive (straight) distance
+
+    """
     return -naive_player_dist_from_goal(game_state.current_player)
 
+
 def exp_shortest_opponent_dist_from_goal_evaluation_function(game_state):
-    return math.exp(-len(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal)))
+    """
+    Exponential distance of opponent player to its goal, uses the shortest path
+    """
+    return -math.exp(-len(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal)))
+
 
 def shortest_opponent_dist_from_goal_evaluation_function(game_state):
+    """
+    Distance of opponent player to its goal, uses the shortest path
+    """
     return -len(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal))
 
+
 def naive_opponent_dist_from_goal_evaluation_function(game_state):
+    """
+    Distance of opponent player to its goal, uses the naive (straight) distance
+    """
     return -naive_player_dist_from_goal(game_state.waiting_player)
 
+
 def naive_player_dist_from_goal(player):
+    """
+    Distance of a given player to its goal, uses the naive (straight) distance
+    """
     return abs(int(player.pos[-1]) - int(player.goal))
 
 
 def both_goals_evaluation_function(game_state, opponent_factor=1):
-    return self_dist_from_goal_evaluation_function(
-        game_state) + opponent_factor * opponent_dist_from_goal_evaluation_function(game_state)
+    """
+    Heuristic function that combines the player's distance, opponent distance and looping penalty
+    """
+    loop_penalty = len(game_state.current_player.position_history + [game_state.current_player.pos]) - \
+                   len(set(game_state.current_player.position_history + [game_state.current_player.pos]))
+    return shortest_self_dist_from_goal_evaluation_function(
+        game_state) + opponent_factor * shortest_opponent_dist_from_goal_evaluation_function(game_state) - loop_penalty*100
 
 
 def prevent_loop_function(game_state):
+    """
+    penalty for preventing looping
+    """
     loop_penalty = len(game_state.current_player.position_history + [game_state.current_player.pos]) - \
                    len(set(game_state.current_player.position_history + [game_state.current_player.pos]))
     return loop_penalty
 
+
 def statistic_simulation_random_player(game_state, num_to_simulate):
+    """
+    Heuristic function that runs games between two random players and uses the results to
+    evaluate the state.
+    """
     wins = [0, 0]
     for _ in range(num_to_simulate):
         random_player_1 = RandomPlayer(
@@ -64,29 +108,10 @@ def statistic_simulation_random_player(game_state, num_to_simulate):
     return 1-(wins[0] / num_to_simulate)
 
 
-def clean_board_ahead_player(game_state):
-    count = 0
-    for wall in game_state.placed_walls:
-        if game_state.current_player.position < wall[1] < game_state.current_player.goal or \
-                game_state.current_player.position > wall[1] > game_state.current_player.goal:
-            count += 1
-    return -count
-
-
-def dirty_board_ahead_opponent(game_state):
-    count = 0
-    for wall in game_state.placed_walls:
-        if game_state.waiting_player.goal < wall[1] < game_state.waiting_player.position or \
-                game_state.waiting_player.goal > wall[1] > game_state.waiting_player.position:
-            count += 1
-    return count
-
-
-def opponent_walls(game_state):
-    return -game_state.waiting_player.walls
-
-
 def walls_dist_heuristic(game_state):
+    """
+    Heuristic that considers the walls locations
+    """
     opponent = game_state.waiting_player
     total_dist = 0
 
@@ -107,10 +132,6 @@ def blocking_opponent_path_heuristic(game_state):
 
     return blocking_walls
 
+
 def shortest_opponent_path(game_state):
     return len(game_state.get_shortest_path(game_state.waiting_player.pos, game_state.waiting_player.goal))
-
-def combined_heuristic(game_state):
-    return (
-        self_dist_from_goal_evaluation_function(game_state)
-    )

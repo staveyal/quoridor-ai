@@ -1,3 +1,8 @@
+"""
+This code was downloaded from https://www.pypi.org/project/python-quoridor
+And we changed it to match our needs
+All right reserved to the original writer due to MIT license
+"""
 import random
 import string
 import pickle
@@ -21,7 +26,6 @@ from exceptions import (
     GameCompletedError,
     NothingToUndoError,
 )
-
 
 
 @dataclass
@@ -51,6 +55,7 @@ class GameResult:
     pgn: str
     winner: Optional[Player] = None
     loser: Optional[Player] = None
+
 
 class Quoridor:
     """
@@ -271,7 +276,6 @@ class Quoridor:
             self.waiting_player.placed_walls.pop()
             cell = wall[:2]
             if wall[2] == "h":
-                # e3h verwijderd verbinding tussen e3-e4 en f3-f4
                 connected_cells = [
                     (cell, cell[0] + chr(ord(cell[1]) + 1)),
                     (
@@ -280,7 +284,6 @@ class Quoridor:
                     ),
                 ]
             else:
-                # g6v verwijderd verbinding tussen g6-h6 en g7-h7
                 connected_cells = [
                     (cell, chr(ord(cell[0]) + 1) + cell[1]),
                     (
@@ -317,9 +320,6 @@ class Quoridor:
             if not simulate:
                 print(f"current player: {self.current_player}")
                 print(f"waiting player: {self.waiting_player}")
-                #print(f"legal_moves {self.get_legal_moves()}")
-                # print()
-                # print_quoridor_board(self.current_player, self.waiting_player, self.get_legal_moves())
                 print(f"{self.current_player.id}: {self.current_player.pos}->{command}")
                 print("-------------------------------------------------------------------------------")
             if command == "q":
@@ -343,10 +343,6 @@ class Quoridor:
             loser=self.waiting_player,
             pgn=self.get_pgn(),
         )
-
-    def print_pretty_board(self):
-        """Print the board in a pretty way"""
-        pass
 
     def _switch_player(self) -> None:
         """
@@ -401,9 +397,6 @@ class Quoridor:
             raise IllegalWallPlacementError(
                 message="Illegal wall placements, wall overlaps with another wall"
             )
-        # check reachability for both players
-        if len(self.placed_walls) < 4:
-            return
 
         # check reachability for both players
         copy_board = pickle.loads(pickle.dumps(self.board, -1))
@@ -421,8 +414,6 @@ class Quoridor:
             raise IllegalWallPlacementError(
                 message="Illegal wall placement, opponent cannot reach goal"
             )
-
-    from collections import deque
 
     def get_shortest_path(self, start: str, goal: str) -> List[str]:
         """
@@ -476,7 +467,7 @@ class Quoridor:
             True if the player can reach their goal, False otherwise.
         """
 
-        return self._dfs(set(),board,player_pos,player_goal)
+        return self._dfs(set(), board, player_pos, player_goal)
 
     def _dfs(self, visited, graph, node, goal):
         """
@@ -669,7 +660,6 @@ class Quoridor:
         # remove connections
         cell = wall[:2]
         if wall[2] == "h":
-            # e3h verwijderd verbinding tussen e3-e4 en f3-f4
             connected_cells = [
                 (cell, cell[0] + chr(ord(cell[1]) + 1)),
                 (
@@ -678,7 +668,6 @@ class Quoridor:
                 ),
             ]
         else:
-            # g6v verwijderd verbinding tussen g6-h6 en g7-h7
             connected_cells = [
                 (cell, chr(ord(cell[0]) + 1) + cell[1]),
                 (

@@ -7,7 +7,6 @@ import numpy as np
 
 from Constants import START_WALLS, GameStatus
 
-
 @dataclass
 class Player:
     """
@@ -35,21 +34,17 @@ class Player:
     walls: int = START_WALLS
     position_history: List[str] = field(default_factory=lambda: [])
     placed_walls: List[str] = field(default_factory=lambda: [])
-    is_wall_first_game: bool = False
 
     def get_action(self, game_state):
         return input("Your move: ")
 
 
 class RandomPlayer(Player):
+    """
+    Random player that half of the turns choose a random pawn move and otherwise choose a random legal action
+    """
     def get_action(self, game_state):
-        if self.is_wall_first_game:
-            moves = [move for move in filter_moves(game_state) if len(move) == 3]
-            if len(moves) == 0:
-                # moves = list(game_state.get_legal_pawn_moves())
-                print(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal))
-                print(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal))
-        elif random.random() < .5:
+        if random.random() < .5:
             moves = list(game_state.get_legal_pawn_moves())
         else:
             moves = filter_moves(game_state)
@@ -57,26 +52,29 @@ class RandomPlayer(Player):
 
 
 class HeuristicPlayer(Player):
-    def __init__(self, id, pos, goal, evaluation_function,is_wall_first_game,walls=START_WALLS, position_history=None, placed_walls=None, just_movement=False):
-        super().__init__(id, pos, goal, walls, position_history, placed_walls,is_wall_first_game)
+    """
+    Player that choose every turn the best move according to a given evaluation function
+    """
+    def __init__(self, id, pos, goal, evaluation_function,walls=START_WALLS, position_history=None, placed_walls=None,
+                 just_movement=False):
+        super().__init__(id, pos, goal, walls, position_history, placed_walls)
         self.evaluation_function = evaluation_function
         self.just_movement = just_movement
         self.position_history = []
         self.placed_walls = []
+        self.branching_factors = []
 
     def get_action(self, game_state):
-        if self.is_wall_first_game:
-            moves = [move for move in filter_moves(game_state) if len(move) == 3]
-            if len(moves) == 0:
-                # moves = list(game_state.get_legal_pawn_moves())
-                print(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal))
-                print(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal))
-        elif self.just_movement: # So it would make moves and not only walls # random.random() < .5 or
+        if self.just_movement: # So it would make moves and not only walls # random.random() < .5 or
             moves = list(game_state.get_legal_pawn_moves())
         else:
+            if len(filter_moves(game_state)) < 10:
+                print('h')
             moves = filter_moves(game_state)
         best_move = moves[0]
         best_score = -math.inf
+        self.branching_factors.append(len(moves))
+
         for move in moves:
             game_state.make_move(move)
             score = self.__evaluate_state(game_state)
@@ -95,18 +93,21 @@ class HeuristicPlayer(Player):
 
 
 class AlphaBetaPlayer(Player):
-    def __init__(self, id, pos, goal, evaluation_function, is_wall_first_game,walls=START_WALLS, position_history=None, placed_walls=None, depth=1):
-        super().__init__(id, pos, goal, walls, position_history, placed_walls,is_wall_first_game)
+    """
+    Minimax player that uses alpha beta prunning
+    """
+    def __init__(self, id, pos, goal, evaluation_function,walls=START_WALLS, position_history=None, placed_walls=None, depth=1):
+        super().__init__(id, pos, goal, walls, position_history, placed_walls)
         self.depth = depth
         self.position_history = []
         self.placed_walls = []
         self.evaluation_function = evaluation_function
 
     def get_action(self, game_state):
-        value, action = self.__recursive_minimax(game_state, self.depth, True, np.inf, True)
+        value, action = self.__recursive_minimax(game_state, self.depth, True, np.inf)
         return action
 
-    def __recursive_minimax(self, game_state, depth, is_max, best_other, is_first_round=False):
+    def __recursive_minimax(self, game_state, depth, is_max, best_other):
         if game_state.status == GameStatus.COMPLETED:
             if depth == 2:
                 print('a')
@@ -114,18 +115,9 @@ class AlphaBetaPlayer(Player):
         if depth <= 0:
             return self.evaluation_function(game_state), game_state.get_legal_moves()[0]
         value = -np.inf if is_max else np.inf
-        action = ""
-        if self.is_wall_first_game:
-            filtered = [move for move in filter_moves(game_state) if len(move) == 3]
-            if len(filtered) == 0:
-                print(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal))
-                print(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal))
-                return
-        else:
-            filtered = filter_moves(game_state)
-        # if not is_first_round:
-        #     filtered = [move for move in filtered if len(move) == 2]
-        # print(filtered)
+        filtered = filter_moves(game_state)
+        action = filtered[0]
+
         for next_action in filtered:
             game_state.make_move(next_action)
             depth_sub = 1 if len(next_action) == 2 else 3
@@ -144,10 +136,20 @@ class AlphaBetaPlayer(Player):
                 if best_other > value:
                     break
         return value, action
+
+
 def dist_from_cell(move, pos):
+    """
+    Measures the distance between a given move and a given pos
+    """
     return max(abs(ord(move[0]) - ord(pos[0])), abs(ord(move[1]) - ord(pos[1])))
 
+
 def filter_moves(game_state):
+    """
+    Filter the legal moves based on our assumption about the game: walls should be placed near other walls/players
+    Used in order to reduce the branching factor and speed up the agents
+    """
     filtered_moves = []
     for move in game_state.get_legal_moves():
         if len(move) == 2:
@@ -165,6 +167,9 @@ def filter_moves(game_state):
 
 
 def smaller_or_equals_with_chance(value1, value2):
+    """
+    Tie breaking comparison that returns a random result if the values are equal
+    """
     if value1 == value2:
         return random.choice([True, False])
     return value1 < value2

@@ -1,3 +1,8 @@
+"""
+This code was downloaded from https://www.pypi.org/project/python-quoridor
+And we changed it to match our needs
+All right reserved to the original writer due to MIT license
+"""
 import string
 from enum import Enum
 from typing import List,Pattern
@@ -15,6 +20,7 @@ POSSIBLE_WALLS: List[str] = [
     for j in range(1, 9)
     for c in ["h", "v"]
 ]
+
 
 class GameStatus(Enum):
     """
