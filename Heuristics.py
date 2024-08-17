@@ -61,7 +61,7 @@ def statistic_simulation_random_player(game_state, num_to_simulate):
         quoridor._switch_player()
         result = quoridor.play_game(simulate=True)
         wins[result.winner.id] += 1
-    return wins[0] / num_to_simulate
+    return 1-(wins[0] / num_to_simulate)
 
 
 def clean_board_ahead_player(game_state):
