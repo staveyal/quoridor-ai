@@ -95,52 +95,70 @@ class HeuristicPlayer(Player):
 
 
 class AlphaBetaPlayer(Player):
-    def __init__(self, id, pos, goal, evaluation_function, is_wall_first_game,walls=START_WALLS, position_history=None, placed_walls=None, depth=1):
-        super().__init__(id, pos, goal, walls, position_history, placed_walls,is_wall_first_game)
+    def __init__(self, id, pos, goal, evaluation_function, walls=START_WALLS, position_history=None, placed_walls=None, depth=1):
+        super().__init__(id, pos, goal, walls, position_history, placed_walls)
         self.depth = depth
         self.position_history = []
         self.placed_walls = []
         self.evaluation_function = evaluation_function
 
     def get_action(self, game_state):
-        value, action = self.__recursive_minimax(game_state, self.depth, True, np.inf)
+        action = self.alpha_beta_search(game_state, self.depth, 1, float('-inf'), float('inf'), True)
         return action
 
-    def __recursive_minimax(self, game_state, depth, is_max, best_other):
-        if game_state.status == GameStatus.COMPLETED:
-            return (np.inf, "") if not is_max else (-np.inf, "")
-        if depth <= 0:
-            return self.evaluation_function(game_state), game_state.get_legal_moves()[0]
-        value = -np.inf if is_max else np.inf
-        action = ""
-        if self.is_wall_first_game:
-            filtered = [move for move in filter_moves(game_state) if len(move) == 3]
-            if len(filtered) == 0:
-                print(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal))
-                print(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal))
-                return
-        else:
-            filtered = filter_moves(game_state)
-        # print(filtered)
-        for next_action in filtered:
-            game_state.make_move(next_action)
-            depth_sub = 3 if len(next_action) == 3 else 1
-            next_value, _ = self.__recursive_minimax(game_state, depth - depth_sub if not is_max else depth, not is_max, value)
-            game_state.undo_move()
-            if is_max:
-                if smaller_or_equals_with_chance(value, next_value):
-                    value = next_value
-                    action = next_action
-                if best_other < value:
-                    break
-            else:
-                if not smaller_or_equals_with_chance(value, next_value):
-                    value = next_value
-                    action = next_action
-                if best_other > value:
-                    break
-        return value, action
+    def alpha_beta_search(self, state, depth, agent_index, alpha, beta, is_first_round=False):
+        if state.status == GameStatus.COMPLETED:
+            return float('inf') if agent_index == 1 else float("-inf")
+        if depth <= 0 or not state.get_legal_moves():
+            return self.evaluation_function(state)
 
+        if agent_index == 1:  # maximizer
+            v = float('-inf')
+            best_action = None
+
+            filtered = filter_moves(state)
+            # print(filtered)
+            for action in filtered:
+                state.make_move(action)
+                value = self.alpha_beta_search(state, depth, agent_index + 1, alpha, beta)
+                #print(action, value)
+                state.undo_move()
+                if value > v:
+                    v = value
+                    best_action = action
+
+                if v > beta:
+                    break
+
+                alpha = max(alpha, v)
+
+            if depth == self.depth:
+                return best_action
+            else:
+                return v
+        else:  # minimizer
+            v = float('inf')
+            next_agent_index = 3 - agent_index
+
+
+            filtered = filter_moves(state)
+            # print(filtered)
+
+            for action in filtered:
+                state.make_move(action)
+                depth_sub = 3 if len(action) == 3 else 1
+                next_depth = depth - depth_sub
+                value = self.alpha_beta_search(state, next_depth, next_agent_index, alpha, beta)
+                state.undo_move()
+                if value < v:
+                    v = value
+
+                if v < alpha:
+                    break
+
+                beta = min(beta, v)
+
+            return v
 def dist_from_cell(move, pos):
     return max(abs(ord(move[0]) - ord(pos[0])), abs(ord(move[1]) - ord(pos[1])))
 

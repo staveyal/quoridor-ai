@@ -36,11 +36,10 @@ def both_goals_evaluation_function(game_state, opponent_factor=1):
         game_state) + opponent_factor * opponent_dist_from_goal_evaluation_function(game_state)
 
 
-def prevent_loop_function(game_state, opponent_factor):
-    loop_penalty = len(game_state.current_player.position_history) - len(set(game_state.current_player.position_history))
-    return self_dist_from_goal_evaluation_function(
-        game_state) + opponent_factor * opponent_dist_from_goal_evaluation_function(game_state) - loop_penalty * 10
-
+def prevent_loop_function(game_state):
+    loop_penalty = len(game_state.current_player.position_history + [game_state.current_player.pos]) - \
+                   len(set(game_state.current_player.position_history + [game_state.current_player.pos]))
+    return loop_penalty
 
 def statistic_simulation_random_player(game_state, num_to_simulate):
     wins = [0, 0]
