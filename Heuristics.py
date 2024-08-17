@@ -9,15 +9,25 @@ def null_evaluation_function(game_state):
     return 0
 
 
-def self_dist_from_goal_evaluation_function(game_state):
-    # return math.exp(-__get_player_dist_from_goal(game_state.current_player))
+def exp_shortest_self_dist_from_goal_evaluation_function(game_state):
     return math.exp(-len(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal)))
 
-def opponent_dist_from_goal_evaluation_function(game_state):
-    return -math.exp(-len(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal)))
+def shortest_self_dist_from_goal_evaluation_function(game_state):
+    return -len(game_state.get_shortest_path(game_state.current_player.pos,game_state.current_player.goal))
 
+def naive_self_dist_from_goal_evaluation_function(game_state):
+    return -naive_player_dist_from_goal(game_state.current_player)
 
-def __get_player_dist_from_goal(player):
+def exp_shortest_opponent_dist_from_goal_evaluation_function(game_state):
+    return math.exp(-len(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal)))
+
+def shortest_opponent_dist_from_goal_evaluation_function(game_state):
+    return -len(game_state.get_shortest_path(game_state.waiting_player.pos,game_state.waiting_player.goal))
+
+def naive_opponent_dist_from_goal_evaluation_function(game_state):
+    return -naive_player_dist_from_goal(game_state.waiting_player)
+
+def naive_player_dist_from_goal(player):
     return abs(int(player.pos[-1]) - int(player.goal))
 
 
