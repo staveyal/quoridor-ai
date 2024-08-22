@@ -50,20 +50,12 @@ class RandomPlayer(Player):
             moves = filter_moves(game_state)
         return random.choice(moves)
 
-class ProgrammablePlayer(Player):
-    def __init__(self, Player):
-        self.player = Player
-
-    def get_action(self, game_state):
-        return self.player.get_action(game_state)
-
-
 class HeuristicPlayer(Player):
     """
     Player that choose every turn the best move according to a given evaluation function
     """
-    def __init__(self, id, pos, goal, evaluation_function,walls=START_WALLS, position_history=None, placed_walls=None,
-                 just_movement=False):
+    def __init__(self, id, pos, goal, evaluation_function,walls=START_WALLS,
+                 position_history=[], placed_walls=[], just_movement=False):
         super().__init__(id, pos, goal, walls, position_history, placed_walls)
         self.evaluation_function = evaluation_function
         self.just_movement = just_movement
@@ -144,6 +136,7 @@ class AlphaBetaPlayer(Player):
                     break
         return value, action
 
+class QLearningPlayer(Player):
 
 def dist_from_cell(move, pos):
     """
