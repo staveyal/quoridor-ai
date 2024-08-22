@@ -13,7 +13,7 @@ START_POS_P1: str = "e1"
 GOAL_P1: str = "9"
 START_POS_P2: str = "e9"
 GOAL_P2: str = "1"
-START_WALLS: str = 10
+START_WALLS: int = 10
 POSSIBLE_WALLS: List[str] = [
     string.ascii_letters[i] + str(j) + c
     for i in range(8)

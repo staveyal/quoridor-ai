@@ -50,6 +50,13 @@ class RandomPlayer(Player):
             moves = filter_moves(game_state)
         return random.choice(moves)
 
+class ProgrammablePlayer(Player):
+    def __init__(self, Player):
+        self.player = Player
+
+    def get_action(self, game_state):
+        return self.player.get_action(game_state)
+
 
 class HeuristicPlayer(Player):
     """
