@@ -38,6 +38,9 @@ class Player:
     def get_action(self, game_state):
         return input("Your move: ")
 
+    def update(self, state, action, next_state, reward):
+        pass
+
 
 class RandomPlayer(Player):
     """
