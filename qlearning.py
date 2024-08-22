@@ -10,7 +10,7 @@ from game_faster import Quoridor
 from Players import Player
 
 class QLearningPlayer(Player):
-    def __init__(self, id, pos, goal, evaluation_function, walls=START_WALLS,
+    def __init__(self, id, pos, goal, walls=START_WALLS,
                  position_history=[], placed_walls=[], 
                  alpha: float =1.0, epsilon: float =0.05, gamma: float=0.8, 
                  num_training: int = 10):
