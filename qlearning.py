@@ -80,15 +80,15 @@ class QLearningPlayer(Player):
         )
 
     
-    def update(self, state: Quoridor, action: str, nextState: Quoridor, reward: float):
+    def update(self, state: Quoridor, action: str, next_state: Quoridor, reward: float):
         """
-        This function observes a state,action => nextState and reward transition.
+        This function observes a state,action => next_state and reward transition.
         Since we can play the game by ourselves - we can just take state.make_move(action)
         and then do state.undo_move()
         """
 
         state_action_pair = (str(state), action)
-        next_value = self.get_value(nextState)
+        next_value = self.get_value(next_state)
         old_value = self.q_values[state_action_pair]
 
         self.q_values[state_action_pair] = \
