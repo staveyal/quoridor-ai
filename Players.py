@@ -136,8 +136,6 @@ class AlphaBetaPlayer(Player):
                     break
         return value, action
 
-class QLearningPlayer(Player):
-
 def dist_from_cell(move, pos):
     """
     Measures the distance between a given move and a given pos
