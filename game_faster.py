@@ -5,7 +5,7 @@ All right reserved to the original writer due to MIT license
 """
 import random
 import string
-import pickle
+import copy
 from collections import deque
 from dataclasses import dataclass
 from typing import Optional, Dict, List, Set
@@ -26,6 +26,7 @@ from exceptions import (
     GameCompletedError,
     NothingToUndoError,
 )
+from rewards import GAME_END, MOVE_AWAY_FROM_GOAL, MOVE_TOWARDS_GOAL, PLACE_WALL
 
 
 @dataclass
@@ -85,8 +86,8 @@ class Quoridor:
         Whether or not the game is terminated.
     """
 
-    def __init__(self,player1, player2) -> None:
-        self.board: Dict[str, List[str]] = self._create_board()
+    def __init__(self, player1: Player, player2: Player) -> None:
+        self.board: Dict[str, set[str]] = self._create_board()
         self.player1 = player1
         self.player2 = player2
 
@@ -132,6 +133,25 @@ class Quoridor:
     def __str__(self) -> str:
         return f"board: {self.board}"
 
+
+
+    def reward(self, move: str) -> float:
+        reward = 0
+        goal = int(self.current_player.goal)
+        distance_from_goal = abs(goal - int(self.current_player.pos[1]))
+        if len(move) == 2:
+            distance_from_goal_after_move = abs(goal - int(move[1]))
+
+            if (self.status == GameStatus.COMPLETED):
+                reward = GAME_END
+            elif (distance_from_goal_after_move < distance_from_goal):
+                reward = MOVE_TOWARDS_GOAL
+            elif (distance_from_goal_after_move > distance_from_goal):
+                reward = MOVE_AWAY_FROM_GOAL
+        else:
+            reward = PLACE_WALL
+        return reward
+
     def reset(self) -> None:
         """
         Reset quoridor game to its initial state.
@@ -150,7 +170,7 @@ class Quoridor:
         self.__init__()
 
     @staticmethod
-    def _create_board() -> Dict[str, List[str]]:
+    def _create_board() -> Dict[str, set[str]]:
         """
         Creates and returns a dictionary representing the Quoridor board,
         with each key representing a cell and its value being a list of connected cells.
@@ -161,18 +181,18 @@ class Quoridor:
             A dictionary representing the Quoridor board, with each key representing a
             cell and its value being a list of connected cells.
         """
-        board: Dict[str, List[str]] = {}
+        board: Dict[str, set[str]] = {}
         for i in range(9):
             for j in range(1, 10):
-                connected_cells = []
+                connected_cells = set()
                 if i != 0:
-                    connected_cells.append(string.ascii_letters[i - 1] + str(j))
+                    connected_cells.add(string.ascii_letters[i - 1] + str(j))
                 if i != 8:
-                    connected_cells.append(string.ascii_letters[i + 1] + str(j))
+                    connected_cells.add(string.ascii_letters[i + 1] + str(j))
                 if j != 1:
-                    connected_cells.append(string.ascii_letters[i] + str(j - 1))
+                    connected_cells.add(string.ascii_letters[i] + str(j - 1))
                 if j != 9:
-                    connected_cells.append(string.ascii_letters[i] + str(j + 1))
+                    connected_cells.add(string.ascii_letters[i] + str(j + 1))
 
                 board[string.ascii_letters[i] + str(j)] = connected_cells
 
@@ -293,8 +313,8 @@ class Quoridor:
                 ]
             for cell_pair in connected_cells:
                 # remove cell connections
-                self.board[cell_pair[1]].append(cell_pair[0])
-                self.board[cell_pair[0]].append(cell_pair[1])
+                self.board[cell_pair[1]].add(cell_pair[0])
+                self.board[cell_pair[0]].add(cell_pair[1])
 
         self._switch_player()
         self.status = GameStatus.ONGOING
@@ -333,6 +353,8 @@ class Quoridor:
             if command == "undo":
                 self.undo_move()
             else:
+                if self.current_player.expects_update:
+                    self.current_player.update(self, command, self.reward(command))
                 self.make_move(command)
 
         return GameResult(
@@ -399,7 +421,7 @@ class Quoridor:
             )
 
         # check reachability for both players
-        copy_board = pickle.loads(pickle.dumps(self.board, -1))
+        copy_board = copy.deepcopy(self.board)
         self._remove_connections(copy_board, move)
 
         if not self._is_reachable(
@@ -522,7 +544,7 @@ class Quoridor:
         """
 
         # make a temporary copy of the list
-        legal_pawn_moves = self.board[self.current_player.pos][:]
+        legal_pawn_moves = set(self.board[self.current_player.pos])
 
         # check if the other player is in range of current player for jumping moves
         if self.waiting_player.pos in legal_pawn_moves:
@@ -552,15 +574,15 @@ class Quoridor:
                         ord(self.current_player.pos[1]) + 2
                     )
             if pos_behind in self.board[self.waiting_player.pos]:
-                legal_pawn_moves.append(pos_behind)
+                legal_pawn_moves.add(pos_behind)
             else:
-                legal_pawn_moves.extend(
+                legal_pawn_moves.update(
                     pos
                     for pos in self.board[self.waiting_player.pos]
                     if pos != self.current_player.pos
                 )
 
-        return set(legal_pawn_moves)
+        return legal_pawn_moves
 
     def get_legal_wall_moves(self) -> List[str]:
         """
@@ -646,7 +668,7 @@ class Quoridor:
         """
         return wall[0] < "a" or wall[0] > "h" or wall[1] < "1" or wall[1] > "8"
 
-    def _remove_connections(self, board: Dict[str, List[str]], wall: str):
+    def _remove_connections(self, board: Dict[str, set[str]], wall: str):
         """
         Remove the connections between the cells affected by the given wall.
 
