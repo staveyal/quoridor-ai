@@ -1,9 +1,14 @@
 """
 # Q-Learning
-In this file, we implement the gym environment required in order to train our model. 
-We wrap the Quoridor game environment with it, and use it to train against other players.
+This file is based on the template given by the course staff on Ex6.
+This was generated with some help by ChatGPT, for example we did know
+beforehand about the option to use a defaultdict in order to implement
+default values of 0 for a dictionary that represents the q values
+indexed by state-action pairs as specified in the Q learning algorithm.
 """
 from collections import defaultdict
+import pickle
+from typing import overload
 import numpy as np
 from Constants import START_WALLS
 from game_faster import Quoridor
@@ -12,7 +17,7 @@ from Players import Player
 class QLearningPlayer(Player):
     def __init__(self, id, pos, goal, walls=START_WALLS,
                  position_history=[], placed_walls=[], 
-                 alpha: float =1.0, epsilon: float =0.05, gamma: float=0.8, 
+                 alpha: float =1.0, epsilon: float =0.3, gamma: float=0.8, 
                  num_training: int = 10):
         super().__init__(id, pos, goal, walls, position_history, placed_walls)
         self.alpha = alpha
@@ -21,6 +26,7 @@ class QLearningPlayer(Player):
         self.num_training = num_training
         # A dictionary that returns 0 on non existent keys
         self.q_values = defaultdict(float) 
+        self.expects_update = True
         
     def stop_learning(self):
         self.alpha, self.epsilon = 0, 0
@@ -80,19 +86,26 @@ class QLearningPlayer(Player):
         )
 
     
-    def update(self, state: Quoridor, action: str, next_state: Quoridor, reward: float):
+    def update(self, state: Quoridor, action: str, reward: float):
         """
         This function observes a state,action => next_state and reward transition.
         Since we can play the game by ourselves - we can just take state.make_move(action)
         and then do state.undo_move()
         """
-
         state_action_pair = (str(state), action)
-        next_value = self.get_value(next_state)
+        state.make_move(action)
+        next_value = self.get_value(state)
+        state.undo_move()
         old_value = self.q_values[state_action_pair]
+
+        # print(reward)
 
         self.q_values[state_action_pair] = \
             old_value + self.alpha * (reward + self.discount * next_value - old_value)
+
+    def import_q_values(self, file_path: str):
+        with open(file_path, "rb") as q_values:
+            self.q_values = pickle.load(q_values)
 
 
 

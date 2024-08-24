@@ -34,11 +34,12 @@ class Player:
     walls: int = START_WALLS
     position_history: List[str] = field(default_factory=lambda: [])
     placed_walls: List[str] = field(default_factory=lambda: [])
+    expects_update = False
 
     def get_action(self, game_state):
         return input("Your move: ")
 
-    def update(self, state, action, next_state, reward):
+    def update(self, state, action: str, reward: float):
         pass
 
 
