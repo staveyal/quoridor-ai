@@ -1,6 +1,9 @@
 import pickle
+from numpy import average, number
+import tqdm
 import math
 import time
+from itertools import product
 
 from Constants import START_POS_P1, GOAL_P1, START_POS_P2, GOAL_P2
 from Heuristics import both_goals_evaluation_function, statistic_simulation_random_player,\
@@ -13,8 +16,10 @@ from game_faster import Quoridor
 import matplotlib.pyplot as plt
 import random
 import datetime
-
 from qlearning import QLearningPlayer
+
+def get_time_date() -> str:
+    return datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
 
 def naive_vs_shortest():
     for i in range(5):
@@ -171,20 +176,24 @@ def random_vs_random():
     plt.ylabel("Number of turns")
     plt.show()
 
-def random_vs_learning(number_of_matches: int = 200):
+def random_vs_learning(alpha=1, epsilon=0.3, gamma=0.8, number_of_matches: int = 100, 
+                       number_of_training_matches: int = 50):
     num_of_turns = []
     q_learner = QLearningPlayer(
         id=1,
         pos=START_POS_P1,
-        goal=GOAL_P1
+        goal=GOAL_P1,
+        alpha=alpha,
+        epsilon=epsilon,
+        gamma=gamma
     )
 
     q_counter = 0
     num_of_turns = []
     match_number = []
     for i in range(number_of_matches):
-        if (i == number_of_matches / 2):
-            q_learner.stop_learning()
+        if (i == number_of_training_matches):
+            q_learner.epsilon = 0.05
             print(f"wins before stopped learning: {q_counter}")
             q_counter = 0
         q_learner.pos = START_POS_P1
@@ -198,25 +207,43 @@ def random_vs_learning(number_of_matches: int = 200):
         result = quoridor.play_game(simulate=True)
 
         id = result.winner.id
-
+        if (i >= number_of_training_matches):
+            match_number.append(i - number_of_training_matches + 1)
+            num_of_turns.append(result.total_moves)
         if (id == 1):
             q_counter += 1
-            match_number.append(i)
-            num_of_turns.append(result.total_moves)
-
-
-    plt.title("Game Length of different opponent factors")
+       
+    model_parameters = f'alpha-{alpha}-gamma-{gamma}' + \
+                    f'-epsilon-{epsilon}'
+    
+    mean_num_of_turns = average(num_of_turns)
+    plt.figure()
+    plt.scatter(match_number, num_of_turns)
+    plt.axhline(y = mean_num_of_turns, color='r', linestyle='--', label=f'mean = {mean_num_of_turns}')
+    plt.title(rf"$\alpha = {alpha}$, $\gamma = {gamma}$, $\epsilon={epsilon}$, trained for {number_of_training_matches} matches,"
+              + f" winrate: {q_counter / (number_of_matches - number_of_training_matches)}")
     plt.xlabel("Match number")
     plt.ylabel("Number of turns until winning")
-    plt.show()
-    print(f"wins after stopped learning: {q_counter}")
+    plt.legend()
+    plt.savefig(f"graphs/trained-for-{number_of_training_matches}-{get_time_date()}-{model_parameters}-scatter.jpg")
+    plt.close()
+    # plt.plot(match_number, num_of_turns)
+    # plt.title("Game Length of different opponent factors")
+    # plt.xlabel("Match number")
+    # plt.ylabel("Number of turns until winning")
+    # plt.savefig(f"trained-for-{number_of_training_matches}-{get_time_date()}" +
+    #             f"-{model_parameters}-plot.png")
+    # print(f"wins after stopped learning: {q_counter}")
+    # print(f"mean number of turns: {mean_num_of_turns}")
 
-    with open(f"q-values-{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}", 'wb') as file:
-        pickle.dump(q_learner.q_values, file)
+    # with open(
+    #     f"q-values/q-values-{get_time_date()}-trained-for-{number_of_training_matches}-{model_parameters}.pkl",
+    #           'wb') as file:
+    #     pickle.dump(q_learner.q_values, file)
 
 
     
-def learning_vs_alphabeta(q_values_path: str, number_of_matches: int = 10):
+def learning_vs_alphabeta(q_values_path: str, depth: int, number_of_matches: int = 10):
     q_learner = QLearningPlayer(
         id=1,
         pos=START_POS_P1,
@@ -227,13 +254,14 @@ def learning_vs_alphabeta(q_values_path: str, number_of_matches: int = 10):
     q_learner.import_q_values(q_values_path)
 
     q_counter = 0
-    for i in range(number_of_matches):
+    for i in tqdm.tqdm(range(number_of_matches)):
         q_learner.pos = START_POS_P1
         q_learner.goal = GOAL_P1
         random = AlphaBetaPlayer(
             id=2,
             pos=START_POS_P2,
             goal=GOAL_P2,
+            depth=depth,
             evaluation_function=lambda x: both_goals_evaluation_function(x, (i - 5) / 5),
         )
         quoridor = Quoridor(q_learner, random)
@@ -244,23 +272,35 @@ def learning_vs_alphabeta(q_values_path: str, number_of_matches: int = 10):
         if (id == 1):
             q_counter += 1
             # print("victory")
+        
 
         print(f"game {i} ended")
-
-
-        # print(quoridor)
-       
-         
-    # plt.plot([(i - 5) / 5 for i in range(number_of_matches)], num_of_turns)
-    # plt.title("Game Length of different opponent factors")
-    # plt.xlabel("Opponent factor")
-    # plt.ylabel("Number of turns")
-    # plt.show()
+        print(f"player with id: {id} won")
     print(f"q_learner wins: {q_counter}")
 
 
 
 if __name__ == '__main__':
+    gammas = {0.2, 0.5, 0.8}
+    training_matches_numbers ={10} 
+    epsilons = {0.1, 0.3, 0.5}
+    alphas = {1, 0.5, 0.75}
+    evalutaing_matches_number = 50 
+    random_vs_learning(number_of_matches=evalutaing_matches_number+50, 
+                        number_of_training_matches=50,
+                        gamma=0.5
+        )
+    # for training_matches, epsilon, alpha, gamma in tqdm.tqdm(list(product(training_matches_numbers, 
+    #                                                                  epsilons, alphas, gammas))):
+    #     random_vs_learning(number_of_matches=evalutaing_matches_number+training_matches, 
+    #                         number_of_training_matches=training_matches,
+    #                         alpha=alpha,
+    #                         epsilon=epsilon,
+    #                         gamma=gamma
+    #         )
+
     # opponent_factor_evaluation()
-    random_vs_learning()
+    # learning_vs_alphabeta(r'/home/ec2-user/quoridor-ai/q-values-20240824-172759-trained-for-50.0',
+                        #   2)
+
 
